@@ -1,0 +1,77 @@
+# Copyright 2026 OMNIA EYE Corporation. SPDX-License-Identifier: Apache-2.0
+name: Publish to PyPI (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing reviewed release tag, for example v0.1.0
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Verify and build release tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Require a version tag
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo 'Expected an existing vMAJOR.MINOR.PATCH tag.' >&2
+            exit 1
+          fi
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          persist-credentials: false
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.12'
+      - name: Validate source and version
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+          TYPESAFE_API_KEY: ''
+          OMNIA_LAYA_OFFLINE: 'true'
+          HF_HUB_OFFLINE: '1'
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . --group dev
+          python -c 'import os, tomllib; from pathlib import Path; v = tomllib.loads(Path("pyproject.toml").read_text())["project"]["version"]; assert os.environ["RELEASE_TAG"] == "v" + v, "Tag and package version differ"'
+          python -m ruff check .
+          python -m ruff format --check .
+          python -m pytest -m "not live"
+          python -m build
+          python -m twine check dist/*
+      - name: Upload reviewed distributions
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-distributions
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Publish through Trusted Publishing
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download verified distributions
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release-distributions
+          path: dist
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        with:
+          attestations: true
