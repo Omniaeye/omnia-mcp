@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "omnia": {
+      "command": "omnia-mcp",
+      "args": [
+        "serve"
+      ],
+      "env": {
+        "OMNIA_DEFAULT_PROVIDER": "jev",
+        "OMNIA_ALLOWED_PROVIDERS": "jev"
+      }
+    }
+  }
+}

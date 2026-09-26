@@ -1,0 +1,24 @@
+{
+  "servers": {
+    "omnia": {
+      "type": "stdio",
+      "command": "omnia-mcp",
+      "args": [
+        "serve"
+      ],
+      "env": {
+        "OMNIA_DEFAULT_PROVIDER": "jev",
+        "OMNIA_ALLOWED_PROVIDERS": "jev",
+        "TYPESAFE_API_KEY": "${input:typesafe-api-key}"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "typesafe-api-key",
+      "description": "TypeSafe API key for JEV",
+      "password": true
+    }
+  ]
+}
