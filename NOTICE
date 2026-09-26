@@ -1,0 +1,22 @@
+OMNIA MCP — JEV & LAYA
+Copyright 2026 OMNIA EYE Corporation
+
+This product includes original OMNIA application and integration code.
+The decision layer is extracted from prior OMNIA integration work. Its
+validation, policy, and ledger behavior are maintained as part of this package.
+
+Optional dependency attribution:
+LAYA is developed by Convai Innovations and distributed by its authors under
+the Apache License 2.0. The local-laya extra installs that upstream package.
+This repository does not vendor its inference engine or model weights.
+Upstream: https://github.com/NandhaKishorM/laya
+
+The Model Context Protocol Python SDK is maintained by its upstream authors.
+Upstream: https://github.com/modelcontextprotocol/python-sdk
+
+JEV is accessed through the TypeSafe service. Provider names identify
+integrations and do not imply endorsement or transfer of ownership.
+API access, third-party packages, and model weights remain subject to
+their applicable terms.
+
+This notice is informational. It does not modify the Apache License 2.0.

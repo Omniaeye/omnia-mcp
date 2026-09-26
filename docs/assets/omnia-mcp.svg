@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-labelledby="title desc">
+  <title id="title">OMNIA MCP — JEV &amp; LAYA</title>
+  <desc id="desc">OMNIA MCP wordmark with an eye symbol and the subtitle Choice. Score. Yes or no.</desc>
+  <!-- Copyright 2026 OMNIA EYE Corporation. SPDX-License-Identifier: Apache-2.0 -->
+  <rect width="1200" height="320" rx="24" fill="#080d16"/>
+  <path d="M68 150c31-43 72-65 121-65s90 22 121 65c-31 43-72 65-121 65S99 193 68 150Z" fill="none" stroke="#79e3d5" stroke-width="8"/>
+  <circle cx="189" cy="150" r="31" fill="#79e3d5"/>
+  <circle cx="199" cy="140" r="9" fill="#080d16"/>
+  <text x="360" y="143" fill="#f3f7fc" font-family="Arial, Helvetica, sans-serif" font-size="66" font-weight="700" letter-spacing="5">OMNIA MCP</text>
+  <text x="364" y="195" fill="#79e3d5" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="700" letter-spacing="4">JEV &amp; LAYA</text>
+  <text x="364" y="248" fill="#a7b6cb" font-family="Arial, Helvetica, sans-serif" font-size="22">Choice. Score. Yes or no.</text>
+</svg>
