@@ -1,0 +1,38 @@
+{
+  "case_id": "zh_published_release",
+  "model": "jev-1.13.0",
+  "answers": {
+    "event": {
+      "type": "choice",
+      "choice": "published_release",
+      "confidence": 1.0,
+      "probabilities": {
+        "published_release": 1.0,
+        "documentation_commit": 0.0
+      }
+    },
+    "published": {
+      "type": "noul",
+      "noul": 0.97
+    },
+    "urgency": {
+      "type": "score",
+      "score": 1.99,
+      "confidence": 0.99,
+      "legend": {
+        "0": "0：仅文档提交",
+        "1": "1：版本已计划但尚未发布",
+        "2": "2：稳定版本已发布"
+      },
+      "probabilities": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 1.0
+      }
+    }
+  },
+  "usage": {
+    "input_tokens": 528,
+    "output_tokens": 65
+  }
+}

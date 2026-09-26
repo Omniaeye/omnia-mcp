@@ -1,0 +1,23 @@
+{
+  "validated_at": "2026-09-26T19:38:01.355641+00:00",
+  "test": "real_jev_api_mcp_stdio",
+  "protocol": "2026-07-28",
+  "provider": "jev",
+  "model": "jev-1.13.0",
+  "question_types": [
+    "choice",
+    "noul",
+    "score"
+  ],
+  "decision_status": "accepted",
+  "structured_output_valid": true,
+  "lookup_matches": true,
+  "cache_replay_matches": true,
+  "batch_cache_replay_matches": true,
+  "single_persisted_decision": true,
+  "client_context_closed": true,
+  "first_evaluation_seconds": 1.208,
+  "cache_replay_seconds": 0.002,
+  "total_seconds_including_cleanup": 1.354,
+  "quality_accuracy_measured": false
+}

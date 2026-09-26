@@ -197,7 +197,9 @@ class DecisionService:
                         self.settings.max_requests_per_minute, self.settings.max_requests_per_day
                     )
                     raw = await provider.evaluate(request.state, questions)
-                    answers = validate_answers(raw, questions)
+                    answers = validate_answers(
+                        raw, questions, decimal_places=2 if name == "jev" else 4
+                    )
                     model = raw.get("model")
                     if not isinstance(model, str) or not 1 <= len(model) <= 200:
                         raise OmniaError(

@@ -1,0 +1,15 @@
+{
+  "source_report": "jev-acceptance-100.json",
+  "source_report_sha256": "33d388c5717b64b0f0b6ab3f75853058cd1bd1f31799755178b530bc044cc44f",
+  "read_only_ledger_check": true,
+  "persisted_decisions": 87,
+  "pending_claims": 0,
+  "failure_codes": {
+    "invalid_provider_response": 13
+  },
+  "usage_reported_by_successful_decisions": {
+    "input_tokens": 43493,
+    "output_tokens": 5125
+  },
+  "failed_response_usage_not_recorded": true
+}

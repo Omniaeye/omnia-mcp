@@ -1,0 +1,936 @@
+{
+  "_copyright": "Copyright 2026 OMNIA EYE Corporation",
+  "_license": "Apache-2.0",
+  "schema_version": "omnia.acceptance.v1",
+  "provenance": "authored_acceptance_fixture",
+  "description": "Twenty synthetic authored cases, not production data or a representative benchmark. Five sequential rounds yield 100 uncached provider evaluations. These cases test explicit news/commit attribution and hypothetical snapshot classification rules, never market recommendations or execution.",
+  "interpretation": "Acceptance is exact choice equality, noul>=0.5 for true (otherwise false), and inclusive score bands. The default decision policy is preserved; accepted/needs_review is recorded independently. Scores use a declared ordinal 0..2 rubric, not real-world urgency.",
+  "languages": [
+    "en",
+    "pt",
+    "zh",
+    "ja"
+  ],
+  "cases": [
+    {
+      "id": "en_published_release",
+      "family": "news_commits",
+      "language": "en",
+      "description": "Published stable release; no inference beyond explicit text.",
+      "request": {
+        "state": "The repository published stable release v2.4.0 and tag v2.4.0 today. The release artifact is marked published.",
+        "questions": {
+          "event": {
+            "type": "choice",
+            "instructions": "Classify the explicitly recorded repository event.",
+            "criteria": {
+              "published_release": "A stable release was published with a release tag.",
+              "documentation_commit": "Only a documentation commit occurred; there is no published release."
+            }
+          },
+          "published": {
+            "type": "noul",
+            "instructions": "Was a stable release explicitly published?"
+          },
+          "urgency": {
+            "type": "score",
+            "instructions": "Use only this fixed urgency rubric: documentation-only commit=0; release merely planned=1; stable release actually published=2.",
+            "criteria": [
+              "0: Documentation-only commit",
+              "1: Release planned but unpublished",
+              "2: Stable release published"
+            ]
+          }
+        },
+        "evidence": [
+          "authored-acceptance:en_published_release"
+        ]
+      },
+      "expected": {
+        "event": {
+          "type": "choice",
+          "equals": "published_release"
+        },
+        "published": {
+          "type": "noul",
+          "equals": true,
+          "threshold": 0.5
+        },
+        "urgency": {
+          "type": "score",
+          "min": 1.5,
+          "max": 2
+        }
+      }
+    },
+    {
+      "id": "en_documentation_commit",
+      "family": "news_commits",
+      "language": "en",
+      "description": "Documentation-only commit is not a release.",
+      "request": {
+        "state": "Commit d0c123 changes README spelling only. No release was published and no release tag was created.",
+        "questions": {
+          "event": {
+            "type": "choice",
+            "instructions": "Classify the explicitly recorded repository event.",
+            "criteria": {
+              "published_release": "A stable release was published with a release tag.",
+              "documentation_commit": "Only a documentation commit occurred; there is no published release."
+            }
+          },
+          "published": {
+            "type": "noul",
+            "instructions": "Was a stable release explicitly published?"
+          },
+          "urgency": {
+            "type": "score",
+            "instructions": "Use only this fixed urgency rubric: documentation-only commit=0; release merely planned=1; stable release actually published=2.",
+            "criteria": [
+              "0: Documentation-only commit",
+              "1: Release planned but unpublished",
+              "2: Stable release published"
+            ]
+          }
+        },
+        "evidence": [
+          "authored-acceptance:en_documentation_commit"
+        ]
+      },
+      "expected": {
+        "event": {
+          "type": "choice",
+          "equals": "documentation_commit"
+        },
+        "published": {
+          "type": "noul",
+          "equals": false,
+          "threshold": 0.5
+        },
+        "urgency": {
+          "type": "score",
+          "min": 0,
+          "max": 0.5
+        }
+      }
+    },
+    {
+      "id": "en_quoted_authorship",
+      "family": "news_quoted_authorship",
+      "language": "en",
+      "description": "The quoted claim belongs to Orion, not the sharing author Maya.",
+      "request": {
+        "state": "Post author Maya writes: 'I am sharing a quotation, not making my own launch announcement.' Quoted author Orion writes: 'We launched the Atlas token today.'",
+        "questions": {
+          "claim_source": {
+            "type": "choice",
+            "instructions": "Who is the source of the quoted claim 'We launched the Atlas token today'?",
+            "criteria": {
+              "quoted_author": "Orion, the quoted author",
+              "post_author": "Maya, the author sharing the quotation"
+            }
+          },
+          "own_claim": {
+            "type": "noul",
+            "instructions": "Did Maya make the launch claim in her own voice, outside the quotation?"
+          }
+        },
+        "evidence": [
+          "authored-acceptance:en_quoted_authorship"
+        ]
+      },
+      "expected": {
+        "claim_source": {
+          "type": "choice",
+          "equals": "quoted_author"
+        },
+        "own_claim": {
+          "type": "noul",
+          "equals": false,
+          "threshold": 0.5
+        }
+      }
+    },
+    {
+      "id": "en_missing_snapshot",
+      "family": "snapshot_completeness",
+      "language": "en",
+      "description": "An unavailable required field remains unknown and cannot be treated as zero.",
+      "request": {
+        "state": {
+          "description": "A synthetic token snapshot is missing liquidity_usd. Required fields are liquidity_usd, volume_5m_usd, and age_minutes. null means unavailable, not zero.",
+          "snapshot": {
+            "asset_id": "SYNTHETIC-EN-MISSING",
+            "liquidity_usd": null,
+            "volume_5m_usd": 12000,
+            "age_minutes": 90
+          }
+        },
+        "questions": {
+          "completeness": {
+            "type": "choice",
+            "instructions": "Are all required snapshot fields available? Choose incomplete if any required value is null.",
+            "criteria": {
+              "complete": "Every required field is available.",
+              "incomplete": "At least one required field is unavailable."
+            }
+          },
+          "liquidity_known": {
+            "type": "noul",
+            "instructions": "Is liquidity_usd available as an observed numeric value?"
+          }
+        },
+        "evidence": [
+          "authored-acceptance:en_missing_snapshot"
+        ]
+      },
+      "expected": {
+        "completeness": {
+          "type": "choice",
+          "equals": "incomplete"
+        },
+        "liquidity_known": {
+          "type": "noul",
+          "equals": false,
+          "threshold": 0.5
+        }
+      }
+    },
+    {
+      "id": "en_snapshot_rules",
+      "family": "snapshot_rule_classification",
+      "language": "en",
+      "description": "Complete synthetic snapshot meets all explicit rules.",
+      "request": {
+        "state": {
+          "classification_rules": "Classify this synthetic snapshot using all four rules: liquidity_usd >= 50000; volume_5m_usd >= 10000; age_minutes >= 60; risk_flag is false. This is a label, never authorization to trade.",
+          "snapshot": {
+            "asset_id": "SYNTHETIC-EN-RULES",
+            "liquidity_usd": 60000,
+            "volume_5m_usd": 12000,
+            "age_minutes": 90,
+            "risk_flag": false
+          }
+        },
+        "questions": {
+          "rule_status": {
+            "type": "choice",
+            "instructions": "Classify this synthetic snapshot using all four rules: liquidity_usd >= 50000; volume_5m_usd >= 10000; age_minutes >= 60; risk_flag is false. This is a label, never authorization to trade.",
+            "criteria": {
+              "meets_rules": "All four stated rules are satisfied.",
+              "does_not_meet": "At least one stated rule is not satisfied."
+            }
+          },
+          "all_rules": {
+            "type": "noul",
+            "instructions": "Does the snapshot satisfy all four stated rules?"
+          }
+        },
+        "evidence": [
+          "authored-acceptance:en_snapshot_rules"
+        ]
+      },
+      "expected": {
+        "rule_status": {
+          "type": "choice",
+          "equals": "meets_rules"
+        },
+        "all_rules": {
+          "type": "noul",
+          "equals": true,
+          "threshold": 0.5
+        }
+      }
+    },
+    {
+      "id": "pt_published_release",
+      "family": "news_commits",
+      "language": "pt",
+      "description": "Published stable release; no inference beyond explicit text.",
+      "request": {
+        "state": "O repositório publicou hoje a versão estável v2.4.0 e a tag v2.4.0. O artefato da versão está marcado como publicado.",
+        "questions": {
+          "event": {
+            "type": "choice",
+            "instructions": "Classifique o evento explicitamente registrado no repositório.",
+            "criteria": {
+              "published_release": "Uma versão estável foi publicada com uma tag de versão.",
+              "documentation_commit": "Ocorreu apenas um commit de documentação; nenhuma versão foi publicada."
+            }
+          },
+          "published": {
+            "type": "noul",
+            "instructions": "Uma versão estável foi explicitamente publicada?"
+          },
+          "urgency": {
+            "type": "score",
+            "instructions": "Use somente esta regra fixa de urgência: commit apenas de documentação=0; versão apenas planejada=1; versão estável efetivamente publicada=2.",
+            "criteria": [
+              "0: Commit somente de documentação",
+              "1: Versão planejada, ainda não publicada",
+              "2: Versão estável publicada"
+            ]
+          }
+        },
+        "evidence": [
+          "authored-acceptance:pt_published_release"
+        ]
+      },
+      "expected": {
+        "event": {
+          "type": "choice",
+          "equals": "published_release"
+        },
+        "published": {
+          "type": "noul",
+          "equals": true,
+          "threshold": 0.5
+        },
+        "urgency": {
+          "type": "score",
+          "min": 1.5,
+          "max": 2
+        }
+      }
+    },
+    {
+      "id": "pt_documentation_commit",
+      "family": "news_commits",
+      "language": "pt",
+      "description": "Documentation-only commit is not a release.",
+      "request": {
+        "state": "O commit d0c123 altera somente a ortografia do README. Nenhuma versão foi publicada e nenhuma tag de versão foi criada.",
+        "questions": {
+          "event": {
+            "type": "choice",
+            "instructions": "Classifique o evento explicitamente registrado no repositório.",
+            "criteria": {
+              "published_release": "Uma versão estável foi publicada com uma tag de versão.",
+              "documentation_commit": "Ocorreu apenas um commit de documentação; nenhuma versão foi publicada."
+            }
+          },
+          "published": {
+            "type": "noul",
+            "instructions": "Uma versão estável foi explicitamente publicada?"
+          },
+          "urgency": {
+            "type": "score",
+            "instructions": "Use somente esta regra fixa de urgência: commit apenas de documentação=0; versão apenas planejada=1; versão estável efetivamente publicada=2.",
+            "criteria": [
+              "0: Commit somente de documentação",
+              "1: Versão planejada, ainda não publicada",
+              "2: Versão estável publicada"
+            ]
+          }
+        },
+        "evidence": [
+          "authored-acceptance:pt_documentation_commit"
+        ]
+      },
+      "expected": {
+        "event": {
+          "type": "choice",
+          "equals": "documentation_commit"
+        },
+        "published": {
+          "type": "noul",
+          "equals": false,
+          "threshold": 0.5
+        },
+        "urgency": {
+          "type": "score",
+          "min": 0,
+          "max": 0.5
+        }
+      }
+    },
+    {
+      "id": "pt_quoted_authorship",
+      "family": "news_quoted_authorship",
+      "language": "pt",
+      "description": "The quoted claim belongs to Orion, not the sharing author Maya.",
+      "request": {
+        "state": "A autora da postagem, Maya, escreve: 'Estou compartilhando uma citação, não fazendo meu próprio anúncio de lançamento.' O autor citado, Orion, escreve: 'Lançamos o token Atlas hoje.'",
+        "questions": {
+          "claim_source": {
+            "type": "choice",
+            "instructions": "Quem é a fonte da afirmação citada 'Lançamos o token Atlas hoje'?",
+            "criteria": {
+              "quoted_author": "Orion, o autor citado",
+              "post_author": "Maya, a autora que compartilha a citação"
+            }
+          },
+          "own_claim": {
+            "type": "noul",
+            "instructions": "Maya fez a afirmação de lançamento em sua própria voz, fora da citação?"
+          }
+        },
+        "evidence": [
+          "authored-acceptance:pt_quoted_authorship"
+        ]
+      },
+      "expected": {
+        "claim_source": {
+          "type": "choice",
+          "equals": "quoted_author"
+        },
+        "own_claim": {
+          "type": "noul",
+          "equals": false,
+          "threshold": 0.5
+        }
+      }
+    },
+    {
+      "id": "pt_missing_snapshot",
+      "family": "snapshot_completeness",
+      "language": "pt",
+      "description": "An unavailable required field remains unknown and cannot be treated as zero.",
+      "request": {
+        "state": {
+          "description": "Um snapshot sintético de token não possui liquidity_usd. Campos obrigatórios: liquidity_usd, volume_5m_usd e age_minutes. null significa indisponível, não zero.",
+          "snapshot": {
+            "asset_id": "SYNTHETIC-PT-MISSING",
+            "liquidity_usd": null,
+            "volume_5m_usd": 12000,
+            "age_minutes": 90
+          }
+        },
+        "questions": {
+          "completeness": {
+            "type": "choice",
+            "instructions": "Todos os campos obrigatórios do snapshot estão disponíveis? Escolha incomplete se algum valor obrigatório for null.",
+            "criteria": {
+              "complete": "Todos os campos obrigatórios estão disponíveis.",
+              "incomplete": "Pelo menos um campo obrigatório está indisponível."
+            }
+          },
+          "liquidity_known": {
+            "type": "noul",
+            "instructions": "liquidity_usd está disponível como um valor numérico observado?"
+          }
+        },
+        "evidence": [
+          "authored-acceptance:pt_missing_snapshot"
+        ]
+      },
+      "expected": {
+        "completeness": {
+          "type": "choice",
+          "equals": "incomplete"
+        },
+        "liquidity_known": {
+          "type": "noul",
+          "equals": false,
+          "threshold": 0.5
+        }
+      }
+    },
+    {
+      "id": "pt_snapshot_rules",
+      "family": "snapshot_rule_classification",
+      "language": "pt",
+      "description": "Complete synthetic snapshot fails one explicit rule.",
+      "request": {
+        "state": {
+          "classification_rules": "Classifique o snapshot sintético por todas as quatro regras: liquidity_usd >= 50000; volume_5m_usd >= 10000; age_minutes >= 60; risk_flag é false. Isso é uma classificação, nunca autorização para negociar.",
+          "snapshot": {
+            "asset_id": "SYNTHETIC-PT-RULES",
+            "liquidity_usd": 60000,
+            "volume_5m_usd": 12000,
+            "age_minutes": 90,
+            "risk_flag": true
+          }
+        },
+        "questions": {
+          "rule_status": {
+            "type": "choice",
+            "instructions": "Classifique o snapshot sintético por todas as quatro regras: liquidity_usd >= 50000; volume_5m_usd >= 10000; age_minutes >= 60; risk_flag é false. Isso é uma classificação, nunca autorização para negociar.",
+            "criteria": {
+              "meets_rules": "Todas as quatro regras declaradas são satisfeitas.",
+              "does_not_meet": "Pelo menos uma regra declarada não é satisfeita."
+            }
+          },
+          "all_rules": {
+            "type": "noul",
+            "instructions": "O snapshot satisfaz todas as quatro regras declaradas?"
+          }
+        },
+        "evidence": [
+          "authored-acceptance:pt_snapshot_rules"
+        ]
+      },
+      "expected": {
+        "rule_status": {
+          "type": "choice",
+          "equals": "does_not_meet"
+        },
+        "all_rules": {
+          "type": "noul",
+          "equals": false,
+          "threshold": 0.5
+        }
+      }
+    },
+    {
+      "id": "zh_published_release",
+      "family": "news_commits",
+      "language": "zh",
+      "description": "Published stable release; no inference beyond explicit text.",
+      "request": {
+        "state": "该代码仓库今天已发布稳定版本 v2.4.0，并创建了版本标签 v2.4.0。版本产物被明确标记为已发布。",
+        "questions": {
+          "event": {
+            "type": "choice",
+            "instructions": "请根据明确记录的信息，对代码仓库事件进行分类。",
+            "criteria": {
+              "published_release": "已发布稳定版本，并创建了版本标签。",
+              "documentation_commit": "仅有文档提交，没有已发布的版本。"
+            }
+          },
+          "published": {
+            "type": "noul",
+            "instructions": "是否明确发布了一个稳定版本？"
+          },
+          "urgency": {
+            "type": "score",
+            "instructions": "仅使用以下固定紧急程度规则：仅文档提交=0；版本尚在计划中=1；稳定版本已经实际发布=2。",
+            "criteria": [
+              "0：仅文档提交",
+              "1：版本已计划但尚未发布",
+              "2：稳定版本已发布"
+            ]
+          }
+        },
+        "evidence": [
+          "authored-acceptance:zh_published_release"
+        ]
+      },
+      "expected": {
+        "event": {
+          "type": "choice",
+          "equals": "published_release"
+        },
+        "published": {
+          "type": "noul",
+          "equals": true,
+          "threshold": 0.5
+        },
+        "urgency": {
+          "type": "score",
+          "min": 1.5,
+          "max": 2
+        }
+      }
+    },
+    {
+      "id": "zh_documentation_commit",
+      "family": "news_commits",
+      "language": "zh",
+      "description": "Documentation-only commit is not a release.",
+      "request": {
+        "state": "提交 d0c123 仅修改 README 中的拼写。没有发布任何版本，也没有创建版本标签。",
+        "questions": {
+          "event": {
+            "type": "choice",
+            "instructions": "请根据明确记录的信息，对代码仓库事件进行分类。",
+            "criteria": {
+              "published_release": "已发布稳定版本，并创建了版本标签。",
+              "documentation_commit": "仅有文档提交，没有已发布的版本。"
+            }
+          },
+          "published": {
+            "type": "noul",
+            "instructions": "是否明确发布了一个稳定版本？"
+          },
+          "urgency": {
+            "type": "score",
+            "instructions": "仅使用以下固定紧急程度规则：仅文档提交=0；版本尚在计划中=1；稳定版本已经实际发布=2。",
+            "criteria": [
+              "0：仅文档提交",
+              "1：版本已计划但尚未发布",
+              "2：稳定版本已发布"
+            ]
+          }
+        },
+        "evidence": [
+          "authored-acceptance:zh_documentation_commit"
+        ]
+      },
+      "expected": {
+        "event": {
+          "type": "choice",
+          "equals": "documentation_commit"
+        },
+        "published": {
+          "type": "noul",
+          "equals": false,
+          "threshold": 0.5
+        },
+        "urgency": {
+          "type": "score",
+          "min": 0,
+          "max": 0.5
+        }
+      }
+    },
+    {
+      "id": "zh_quoted_authorship",
+      "family": "news_quoted_authorship",
+      "language": "zh",
+      "description": "The quoted claim belongs to Orion, not the sharing author Maya.",
+      "request": {
+        "state": "发帖人 Maya 写道：“我只是在分享一段引文，并不是在发布我自己的上线公告。” 被引用的作者 Orion 写道：“我们今天推出了 Atlas 代币。”",
+        "questions": {
+          "claim_source": {
+            "type": "choice",
+            "instructions": "引文“我们今天推出了 Atlas 代币”的陈述来自谁？",
+            "criteria": {
+              "quoted_author": "Orion，被引用的作者",
+              "post_author": "Maya，分享引文的发帖人"
+            }
+          },
+          "own_claim": {
+            "type": "noul",
+            "instructions": "Maya 是否在引文之外，以自己的身份作出了该上线声明？"
+          }
+        },
+        "evidence": [
+          "authored-acceptance:zh_quoted_authorship"
+        ]
+      },
+      "expected": {
+        "claim_source": {
+          "type": "choice",
+          "equals": "quoted_author"
+        },
+        "own_claim": {
+          "type": "noul",
+          "equals": false,
+          "threshold": 0.5
+        }
+      }
+    },
+    {
+      "id": "zh_missing_snapshot",
+      "family": "snapshot_completeness",
+      "language": "zh",
+      "description": "An unavailable required field remains unknown and cannot be treated as zero.",
+      "request": {
+        "state": {
+          "description": "一个虚构代币快照缺少 liquidity_usd。必需字段为 liquidity_usd、volume_5m_usd 和 age_minutes。null 表示数据不可用，不表示零。",
+          "snapshot": {
+            "asset_id": "SYNTHETIC-ZH-MISSING",
+            "liquidity_usd": null,
+            "volume_5m_usd": 12000,
+            "age_minutes": 90
+          }
+        },
+        "questions": {
+          "completeness": {
+            "type": "choice",
+            "instructions": "快照的所有必需字段是否都有可用值？如果任何必需值为 null，选择 incomplete。",
+            "criteria": {
+              "complete": "所有必需字段都有可用值。",
+              "incomplete": "至少一个必需字段的数据不可用。"
+            }
+          },
+          "liquidity_known": {
+            "type": "noul",
+            "instructions": "liquidity_usd 是否有可用的已观测数值？"
+          }
+        },
+        "evidence": [
+          "authored-acceptance:zh_missing_snapshot"
+        ]
+      },
+      "expected": {
+        "completeness": {
+          "type": "choice",
+          "equals": "incomplete"
+        },
+        "liquidity_known": {
+          "type": "noul",
+          "equals": false,
+          "threshold": 0.5
+        }
+      }
+    },
+    {
+      "id": "zh_snapshot_rules",
+      "family": "snapshot_rule_classification",
+      "language": "zh",
+      "description": "Complete synthetic snapshot meets all explicit rules.",
+      "request": {
+        "state": {
+          "classification_rules": "仅按这四条规则对虚构快照分类：liquidity_usd >= 50000；volume_5m_usd >= 10000；age_minutes >= 60；risk_flag 为 false。这只是分类，绝不是交易授权。",
+          "snapshot": {
+            "asset_id": "SYNTHETIC-ZH-RULES",
+            "liquidity_usd": 50000,
+            "volume_5m_usd": 10000,
+            "age_minutes": 60,
+            "risk_flag": false
+          }
+        },
+        "questions": {
+          "rule_status": {
+            "type": "choice",
+            "instructions": "仅按这四条规则对虚构快照分类：liquidity_usd >= 50000；volume_5m_usd >= 10000；age_minutes >= 60；risk_flag 为 false。这只是分类，绝不是交易授权。",
+            "criteria": {
+              "meets_rules": "四条指定规则全部满足。",
+              "does_not_meet": "至少一条指定规则不满足。"
+            }
+          },
+          "all_rules": {
+            "type": "noul",
+            "instructions": "该快照是否满足全部四条指定规则？"
+          }
+        },
+        "evidence": [
+          "authored-acceptance:zh_snapshot_rules"
+        ]
+      },
+      "expected": {
+        "rule_status": {
+          "type": "choice",
+          "equals": "meets_rules"
+        },
+        "all_rules": {
+          "type": "noul",
+          "equals": true,
+          "threshold": 0.5
+        }
+      }
+    },
+    {
+      "id": "ja_published_release",
+      "family": "news_commits",
+      "language": "ja",
+      "description": "Published stable release; no inference beyond explicit text.",
+      "request": {
+        "state": "このリポジトリは本日、安定版 v2.4.0 を公開し、バージョンタグ v2.4.0 を作成しました。リリース成果物は公開済みと明記されています。",
+        "questions": {
+          "event": {
+            "type": "choice",
+            "instructions": "明示された記録だけに基づいて、リポジトリのイベントを分類してください。",
+            "criteria": {
+              "published_release": "安定版が公開され、リリースタグが作成された。",
+              "documentation_commit": "文書のコミットのみで、公開されたリリースはない。"
+            }
+          },
+          "published": {
+            "type": "noul",
+            "instructions": "安定版が明示的に公開されましたか？"
+          },
+          "urgency": {
+            "type": "score",
+            "instructions": "緊急度はこの固定規則だけで判定してください：文書だけのコミット=0；リリースが計画段階=1；安定版が実際に公開済み=2。",
+            "criteria": [
+              "0：文書だけのコミット",
+              "1：計画済みだが未公開のリリース",
+              "2：公開済みの安定版"
+            ]
+          }
+        },
+        "evidence": [
+          "authored-acceptance:ja_published_release"
+        ]
+      },
+      "expected": {
+        "event": {
+          "type": "choice",
+          "equals": "published_release"
+        },
+        "published": {
+          "type": "noul",
+          "equals": true,
+          "threshold": 0.5
+        },
+        "urgency": {
+          "type": "score",
+          "min": 1.5,
+          "max": 2
+        }
+      }
+    },
+    {
+      "id": "ja_documentation_commit",
+      "family": "news_commits",
+      "language": "ja",
+      "description": "Documentation-only commit is not a release.",
+      "request": {
+        "state": "コミット d0c123 は README の誤字だけを修正しています。リリースは公開されておらず、リリースタグも作成されていません。",
+        "questions": {
+          "event": {
+            "type": "choice",
+            "instructions": "明示された記録だけに基づいて、リポジトリのイベントを分類してください。",
+            "criteria": {
+              "published_release": "安定版が公開され、リリースタグが作成された。",
+              "documentation_commit": "文書のコミットのみで、公開されたリリースはない。"
+            }
+          },
+          "published": {
+            "type": "noul",
+            "instructions": "安定版が明示的に公開されましたか？"
+          },
+          "urgency": {
+            "type": "score",
+            "instructions": "緊急度はこの固定規則だけで判定してください：文書だけのコミット=0；リリースが計画段階=1；安定版が実際に公開済み=2。",
+            "criteria": [
+              "0：文書だけのコミット",
+              "1：計画済みだが未公開のリリース",
+              "2：公開済みの安定版"
+            ]
+          }
+        },
+        "evidence": [
+          "authored-acceptance:ja_documentation_commit"
+        ]
+      },
+      "expected": {
+        "event": {
+          "type": "choice",
+          "equals": "documentation_commit"
+        },
+        "published": {
+          "type": "noul",
+          "equals": false,
+          "threshold": 0.5
+        },
+        "urgency": {
+          "type": "score",
+          "min": 0,
+          "max": 0.5
+        }
+      }
+    },
+    {
+      "id": "ja_quoted_authorship",
+      "family": "news_quoted_authorship",
+      "language": "ja",
+      "description": "The quoted claim belongs to Orion, not the sharing author Maya.",
+      "request": {
+        "state": "投稿者 Maya は「引用を共有しているだけで、自分のローンチ発表をしているのではありません」と書いています。引用された著者 Orion は「本日、Atlas トークンをローンチしました」と書いています。",
+        "questions": {
+          "claim_source": {
+            "type": "choice",
+            "instructions": "引用文「本日、Atlas トークンをローンチしました」の主張をしたのは誰ですか？",
+            "criteria": {
+              "quoted_author": "Orion：引用された著者",
+              "post_author": "Maya：引用を共有した投稿者"
+            }
+          },
+          "own_claim": {
+            "type": "noul",
+            "instructions": "Maya は引用の外で、自分自身の発言としてそのローンチを主張しましたか？"
+          }
+        },
+        "evidence": [
+          "authored-acceptance:ja_quoted_authorship"
+        ]
+      },
+      "expected": {
+        "claim_source": {
+          "type": "choice",
+          "equals": "quoted_author"
+        },
+        "own_claim": {
+          "type": "noul",
+          "equals": false,
+          "threshold": 0.5
+        }
+      }
+    },
+    {
+      "id": "ja_missing_snapshot",
+      "family": "snapshot_completeness",
+      "language": "ja",
+      "description": "An unavailable required field remains unknown and cannot be treated as zero.",
+      "request": {
+        "state": {
+          "description": "架空のトークンスナップショットでは liquidity_usd が欠落しています。必須項目は liquidity_usd、volume_5m_usd、age_minutes です。null は不明を意味し、ゼロではありません。",
+          "snapshot": {
+            "asset_id": "SYNTHETIC-JA-MISSING",
+            "liquidity_usd": null,
+            "volume_5m_usd": 12000,
+            "age_minutes": 90
+          }
+        },
+        "questions": {
+          "completeness": {
+            "type": "choice",
+            "instructions": "スナップショットのすべての必須項目に値がありますか？必須の値が一つでも null なら incomplete を選んでください。",
+            "criteria": {
+              "complete": "すべての必須項目に利用可能な値がある。",
+              "incomplete": "少なくとも一つの必須項目の値が不明である。"
+            }
+          },
+          "liquidity_known": {
+            "type": "noul",
+            "instructions": "liquidity_usd に観測済みの数値はありますか？"
+          }
+        },
+        "evidence": [
+          "authored-acceptance:ja_missing_snapshot"
+        ]
+      },
+      "expected": {
+        "completeness": {
+          "type": "choice",
+          "equals": "incomplete"
+        },
+        "liquidity_known": {
+          "type": "noul",
+          "equals": false,
+          "threshold": 0.5
+        }
+      }
+    },
+    {
+      "id": "ja_snapshot_rules",
+      "family": "snapshot_rule_classification",
+      "language": "ja",
+      "description": "Complete synthetic snapshot fails one explicit rule.",
+      "request": {
+        "state": {
+          "classification_rules": "架空のスナップショットを次の四条件だけで分類してください：liquidity_usd >= 50000、volume_5m_usd >= 10000、age_minutes >= 60、risk_flag は false。これは分類であり、取引の許可ではありません。",
+          "snapshot": {
+            "asset_id": "SYNTHETIC-JA-RULES",
+            "liquidity_usd": 60000,
+            "volume_5m_usd": 12000,
+            "age_minutes": 59,
+            "risk_flag": false
+          }
+        },
+        "questions": {
+          "rule_status": {
+            "type": "choice",
+            "instructions": "架空のスナップショットを次の四条件だけで分類してください：liquidity_usd >= 50000、volume_5m_usd >= 10000、age_minutes >= 60、risk_flag は false。これは分類であり、取引の許可ではありません。",
+            "criteria": {
+              "meets_rules": "指定された四条件をすべて満たす。",
+              "does_not_meet": "指定された条件を少なくとも一つ満たさない。"
+            }
+          },
+          "all_rules": {
+            "type": "noul",
+            "instructions": "このスナップショットは指定された四条件をすべて満たしますか？"
+          }
+        },
+        "evidence": [
+          "authored-acceptance:ja_snapshot_rules"
+        ]
+      },
+      "expected": {
+        "rule_status": {
+          "type": "choice",
+          "equals": "does_not_meet"
+        },
+        "all_rules": {
+          "type": "noul",
+          "equals": false,
+          "threshold": 0.5
+        }
+      }
+    }
+  ]
+}

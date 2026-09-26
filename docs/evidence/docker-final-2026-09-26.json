@@ -1,0 +1,87 @@
+{
+  "validated_at": "2026-09-26T19:57:38.638383+00:00",
+  "test": "final_source_docker_network_disabled",
+  "image": "omnia-mcp:validation-final",
+  "git_head": "a97a76be453bf0bb5cba026d1af30dc63d3c3c27",
+  "base_image": "python:3.12-slim@sha256:f77ac9e44ae96ef2c90b8053ea08c31f8be030f824196b0ae4db6d462c84e51f",
+  "network": "none",
+  "provider_inference_performed": false,
+  "jev_credential_supplied": false,
+  "image_id": "sha256:38cee9d74000dce38397d8abb4ff7702f5e78e1c00821b73f39f18cbe7aa0f68",
+  "image_size_bytes": 66845765,
+  "version": "0.1.0",
+  "doctor": {
+    "status": "configuration_valid",
+    "version": "0.1.0",
+    "transport": "stdio",
+    "default_provider": "laya",
+    "allowed_providers": [
+      "laya"
+    ],
+    "packages": {
+      "mcp": "2.2.0",
+      "pydantic": "2.13.5",
+      "httpx": "0.28.1",
+      "laya": null
+    },
+    "configuration": {
+      "laya_revision_configured": false,
+      "jev_api_key_configured": false
+    },
+    "checks": {
+      "model_loaded": false,
+      "network_probed": false,
+      "database_opened": false
+    },
+    "note": "Configuration and package presence do not prove provider readiness."
+  },
+  "uid": 10001,
+  "pip_check": "No broken requirements found.",
+  "source_file_hashes": {
+    "__init__.py": "22ba4e8879c3ffc8a251cd74d05760699bdf66e639bec7d7e4151ed45476c693",
+    "__main__.py": "13277b12d1abd304d379cb71dea1d8d0942d057e0bc982e04e4c0803774154e8",
+    "cli.py": "3ec065033adf69c9ad4391d3651c961033480552118751097d11b9c8dd93aa17",
+    "decision/__init__.py": "67c204655fd76adf2a2c4d34463b947cba16d4dc2e83a3df0c5a94f891cfc2aa",
+    "decision/validation.py": "4f1fcf9509e807ad305f2f7e23f21d5e0003d4ca8d2ecc66c9fd0025d7ba2a51",
+    "errors.py": "eb3564011151a6843baa3de90c26ae08c38965f2f4a73ef458cb0cd28e534e89",
+    "providers/__init__.py": "bc75184aee089d23f690a9bb86259e62c9ba2f47e4a1b1ca523fc8a2a679ccd7",
+    "providers/base.py": "2c6249d476afb5696e11cdac6d2e4b9d9be977e8f38a795a2ec9ac42a7d79220",
+    "providers/jev.py": "a14e98e874df27a65d7df8d22efe04f049885b34746d5cc283c879d74e7086a1",
+    "providers/laya.py": "6348c8ecf03f09e702c315b9d6400493d62687d3d0dba18057e1e51ba44a8fe9",
+    "schemas.py": "352157ec5fbc23c17347eb9b6ce9980d313a510d11681b49a24c69d4c0b03781",
+    "server.py": "4689f540306456b565f93b0a75eba6c5a33553042818f6dcf0bec313466835e0",
+    "service.py": "8df0327396f75e85ba6d1b607adaad905a05b783621a4cb1af8958f0f57ab299",
+    "settings.py": "77e111ff46b116a3bebccedec66d1b0db014ea2f7c29087b46a5c88f3be10de6",
+    "storage.py": "2d7fe8cfb17cb53f37cd6d9b8dde831b2350f7ea57b6f0b38bd38a361a3ae319"
+  },
+  "source_matches_current_tree": true,
+  "protocol_checks": [
+    {
+      "mode": "2026-07-28",
+      "tools": [
+        "omnia_capabilities",
+        "omnia_evaluate",
+        "omnia_evaluate_batch",
+        "omnia_get_decision"
+      ],
+      "capabilities_valid": true,
+      "schemas_resource_valid": true,
+      "missing_decision_error_valid": true,
+      "client_context_closed": true
+    },
+    {
+      "mode": "legacy",
+      "tools": [
+        "omnia_capabilities",
+        "omnia_evaluate",
+        "omnia_evaluate_batch",
+        "omnia_get_decision"
+      ],
+      "capabilities_valid": true,
+      "schemas_resource_valid": true,
+      "missing_decision_error_valid": true,
+      "client_context_closed": true
+    }
+  ],
+  "remaining_owned_containers": []
+}

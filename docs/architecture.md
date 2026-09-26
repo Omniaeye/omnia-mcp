@@ -5,14 +5,16 @@ Both JEV and LAYA enter the same OMNIA decision service so that switching provid
 ```mermaid
 flowchart LR
     Client[MCP client] -->|stdio| Server[MCP tools]
-    Server --> Decision[OMNIA decision service]
-    Decision --> Policy[Validation and policy]
-    Policy --> Provider{Selected provider}
+    Server --> Admission[Input limits and admission]
+    Admission --> Cache{Cached decision?}
+    Cache -->|yes| Client
+    Cache -->|no| Provider{Selected provider}
     Provider --> JEV[JEV / TypeSafe HTTP API]
     Provider --> LAYA[Local LAYA runtime]
-    JEV --> Result[Normalized decision]
-    LAYA --> Result
-    Result --> Ledger[(Local SQLite ledger)]
+    JEV --> Validation[Response validation]
+    LAYA --> Validation
+    Validation --> Policy[Review policy]
+    Policy --> Ledger[(Local SQLite ledger)]
     Ledger --> Client
 ```
 
@@ -43,3 +45,9 @@ Cache, retention, request bounds, concurrency, and queue size are operational co
 `src/omnia_mcp` owns the MCP contract and OMNIA decision behavior. Provider libraries remain dependencies. The project does not vendor LAYA's engine or distribute model weights.
 
 Attribution belongs in `NOTICE`. Schema and policy changes require application-contract review even when the provider API stays unchanged.
+
+## Rounded provider output
+
+Response validation checks type, rubric identity, probability ranges, normalization, and consistency between selected answers and their distributions. It preserves returned values instead of silently renormalizing or rewriting them.
+
+The compatibility envelope is two decimal places for the pinned JEV API and four for the pinned local LAYA runtime. Probability intervals account for displayed rounding while requiring a feasible normalized distribution and a compatible answer. This is a transport-precision check, not a recalibration of model confidence. Values outside the envelope fail closed and remain recorded as failures.

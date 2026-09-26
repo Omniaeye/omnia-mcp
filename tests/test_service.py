@@ -176,3 +176,67 @@ async def test_local_batch_serializes_inference_instead_of_failing_busy(tmp_path
     assert all(item.result is not None for item in result.items)
     assert backend.calls == 4
     await engine.aclose()
+
+
+@pytest.mark.parametrize("provider_name", ["jev", "laya"])
+async def test_service_uses_provider_wire_precision_for_rounded_score(tmp_path, provider_name):
+    class RoundedScoreProvider(CountingProvider):
+        def identity(self):
+            return {"provider": provider_name, "revision": "wire-precision-fixture"}
+
+        async def evaluate(self, state, questions):
+            self.calls += 1
+            return {
+                "model": "wire-precision-fixture",
+                "answers": {
+                    "urgency": {
+                        "type": "score",
+                        "score": 1.99,
+                        "probabilities": {"0": 0.0, "1": 0.0, "2": 1.0},
+                    }
+                },
+            }
+
+    backend = RoundedScoreProvider()
+    engine = DecisionService(
+        Settings(
+            database=tmp_path / f"{provider_name}.sqlite3",
+            default_provider=provider_name,
+            allowed_providers=(provider_name,),
+        ),
+        {provider_name: backend},
+    )
+    evaluation = EvaluationRequest(
+        state="Authored fixture: a stable software release was published.",
+        provider=provider_name,
+        questions={
+            "urgency": {
+                "type": "score",
+                "instructions": "Use the declared three-level fixture rubric.",
+                "criteria": ["Documentation only", "Planned release", "Published release"],
+            }
+        },
+    )
+    try:
+        if provider_name == "jev":
+            result = await engine.evaluate(evaluation)
+            assert result.answers["urgency"].score == 1.99
+            assert result.answers["urgency"].probabilities == {"0": 0.0, "1": 0.0, "2": 1.0}
+            assert result.policy.min_probability == 0.8
+            assert result.status == "accepted"
+            persisted = engine.get_decision(result.decision_id)
+            assert persisted.answers == result.answers
+            assert (await engine.evaluate(evaluation)).cached
+        else:
+            with pytest.raises(OmniaError) as rejected:
+                await engine.evaluate(evaluation)
+            assert rejected.value.code == "invalid_provider_response"
+            ledger = engine._db().connection
+            assert ledger.execute("SELECT count(*) FROM decisions").fetchone()[0] == 0
+            assert ledger.execute("SELECT code FROM failures").fetchall() == [
+                ("invalid_provider_response",)
+            ]
+        assert backend.calls == 1
+    finally:
+        await engine.aclose()
+    assert backend.closed
