@@ -1,6 +1,7 @@
 # Copyright 2026 OMNIA EYE Corporation.
 # SPDX-License-Identifier: Apache-2.0
 """Versioned public contracts, independent of MCP transport objects."""
+
 from __future__ import annotations
 
 import json
@@ -17,13 +18,15 @@ QuestionId = Annotated[str, Field(min_length=1, max_length=80, pattern=r"^[a-zA-
 
 
 class Contract(BaseModel):
-    model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)
+    model_config = ConfigDict(extra="forbid", hide_input_in_errors=True, strict=True)
 
 
 class ChoiceQuestion(Contract):
     type: Literal["choice"]
     instructions: Text
-    criteria: dict[Annotated[str, Field(min_length=1, max_length=100)], Text | None] = Field(min_length=2, max_length=64)
+    criteria: dict[Annotated[str, Field(min_length=1, max_length=100)], Text | None] = Field(
+        min_length=2, max_length=64
+    )
 
 
 class ScoreQuestion(Contract):
@@ -58,7 +61,9 @@ class EvaluationRequest(Contract):
     state: str | dict[str, JsonValue] | list[JsonValue]
     questions: dict[QuestionId, Question] = Field(min_length=1, max_length=16)
     provider: ProviderName | None = None
-    evidence: list[Annotated[str, Field(min_length=1, max_length=2048)]] = Field(default_factory=list, max_length=64)
+    evidence: list[Annotated[str, Field(min_length=1, max_length=2048)]] = Field(
+        default_factory=list, max_length=64
+    )
     policy: DecisionPolicy = Field(default_factory=DecisionPolicy)
 
     @field_validator("state", mode="before")
@@ -75,6 +80,7 @@ class EvaluationRequest(Contract):
             elif isinstance(item, list):
                 for child in item:
                     walk(child, depth + 1)
+
         if not isinstance(value, (str, dict, list)) or not value:
             raise ValueError("state must be nonempty text or JSON")
         walk(value)
@@ -95,6 +101,7 @@ class ChoiceAnswer(Contract):
 
 
 class ScoreAnswer(Contract):
+    legend: dict[str, Text] | None = None
     type: Literal["score"]
     score: float = Field(allow_inf_nan=False)
     probabilities: dict[str, Probability]
@@ -119,7 +126,7 @@ class DecisionResult(Contract):
     provider: ProviderName
     model: str
     identity: dict[str, JsonValue]
-    created_at: datetime
+    created_at: datetime = Field(strict=False)
     answers: dict[str, Answer]
     status: Literal["accepted", "needs_review"]
     review_reasons: list[str]
@@ -151,4 +158,3 @@ class BatchItemResult(Contract):
 class BatchResult(Contract):
     schema_version: Literal["omnia.mcp.batch.v1"] = "omnia.mcp.batch.v1"
     items: list[BatchItemResult]
-

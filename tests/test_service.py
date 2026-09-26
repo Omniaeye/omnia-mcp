@@ -157,3 +157,22 @@ async def test_shutdown_closes_provider_and_rejects_new_calls(tmp_path):
     with pytest.raises(OmniaError) as error:
         await engine.evaluate(request())
     assert error.value.code == "server_closed"
+
+
+async def test_local_batch_serializes_inference_instead_of_failing_busy(tmp_path):
+    class ExclusiveProvider(CountingProvider):
+        active = False
+
+        async def evaluate(self, state, questions):
+            assert not self.active
+            self.active = True
+            try:
+                return await super().evaluate(state, questions)
+            finally:
+                self.active = False
+
+    engine, backend = service(tmp_path, ExclusiveProvider(0.01))
+    result = await engine.evaluate_batch(BatchRequest(items=[request(str(i)) for i in range(4)]))
+    assert all(item.result is not None for item in result.items)
+    assert backend.calls == 4
+    await engine.aclose()

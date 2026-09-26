@@ -12,4 +12,3 @@ class OmniaError(Exception):
 
     def as_dict(self) -> dict:
         return {"code": self.code, "message": self.message, "retryable": self.retryable}
-

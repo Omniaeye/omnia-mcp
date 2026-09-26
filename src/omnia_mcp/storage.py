@@ -1,13 +1,13 @@
 # Copyright 2026 OMNIA EYE Corporation.
 # SPDX-License-Identifier: Apache-2.0
 """Durable decisions, bounded usage and expiring cross-process ownership."""
+
 from __future__ import annotations
 
-import json
 import sqlite3
 import time
 import uuid
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from pathlib import Path
 
 from omnia_mcp.errors import OmniaError
@@ -19,7 +19,36 @@ class Ledger:
         self.path = path.expanduser().resolve()
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.clock = clock
-        self.connection = sqlite3.connect(self.path, timeout=1.5, isolation_level=None)
+        self.connection = sqlite3.connect(self.path, timeout=0.05, isolation_level=None)
+        expected = {
+            "decisions": ["id", "cache_key", "created", "result"],
+            "claims": ["cache_key", "owner", "expires"],
+            "usage": ["bucket", "count", "expires"],
+            "failures": ["id", "input_hash", "code", "created"],
+        }
+        version = self.connection.execute("PRAGMA user_version").fetchone()[0]
+        app_id = self.connection.execute("PRAGMA application_id").fetchone()[0]
+        tables = {
+            row[0]
+            for row in self.connection.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        }
+        valid = version in (0, 1) and app_id in (0, 0x4F4D4D43)
+        if tables:
+            valid = valid and version == 1 and tables == set(expected)
+            if valid:
+                for table, columns in expected.items():
+                    actual = [
+                        row[1] for row in self.connection.execute(f"PRAGMA table_info({table})")
+                    ]
+                    valid = valid and actual == columns
+        elif version != 0:
+            valid = False
+        if not valid:
+            self.connection.close()
+            raise OmniaError(
+                "storage_schema_mismatch", "Database schema is not an OMNIA MCP ledger."
+            )
+        self.connection.execute("PRAGMA application_id=1330466115")
         self.connection.execute("PRAGMA journal_mode=WAL")
         self.connection.execute("PRAGMA foreign_keys=ON")
         self.connection.executescript("""
@@ -71,14 +100,18 @@ class Ledger:
         now = self.clock()
         owner = uuid.uuid4().hex
         with self.transaction():
-            self.connection.execute("DELETE FROM claims WHERE cache_key=? AND expires<=?", (cache_key, now))
+            self.connection.execute(
+                "DELETE FROM claims WHERE cache_key=? AND expires<=?", (cache_key, now)
+            )
             cursor = self.connection.execute(
                 "INSERT OR IGNORE INTO claims VALUES (?,?,?)", (cache_key, owner, now + lease)
             )
         return owner if cursor.rowcount else None
 
     def release(self, cache_key: str, owner: str) -> None:
-        self.connection.execute("DELETE FROM claims WHERE cache_key=? AND owner=?", (cache_key, owner))
+        self.connection.execute(
+            "DELETE FROM claims WHERE cache_key=? AND owner=?", (cache_key, owner)
+        )
 
     def complete(self, cache_key: str, owner: str, result: DecisionResult) -> None:
         now = self.clock()
@@ -88,22 +121,32 @@ class Ledger:
                 (cache_key, owner, now),
             ).fetchone()
             if not owned:
-                raise OmniaError("claim_expired", "Decision ownership expired; retry the request.", True)
+                raise OmniaError(
+                    "claim_expired", "Decision ownership expired; retry the request.", True
+                )
             self.connection.execute(
                 "INSERT INTO decisions VALUES (?,?,?,?)",
                 (result.decision_id, cache_key, now, result.model_dump_json()),
             )
-            self.connection.execute("DELETE FROM claims WHERE cache_key=? AND owner=?", (cache_key, owner))
+            self.connection.execute(
+                "DELETE FROM claims WHERE cache_key=? AND owner=?", (cache_key, owner)
+            )
 
     def reserve_usage(self, per_minute: int, per_day: int) -> None:
         now = self.clock()
-        buckets = [(f"minute:{int(now // 60)}", per_minute, (int(now // 60) + 1) * 60),
-                   (f"day:{int(now // 86400)}", per_day, (int(now // 86400) + 1) * 86400)]
+        buckets = [
+            (f"minute:{int(now // 60)}", per_minute, (int(now // 60) + 1) * 60),
+            (f"day:{int(now // 86400)}", per_day, (int(now // 86400) + 1) * 86400),
+        ]
         with self.transaction():
             for key, limit, expiry in buckets:
-                row = self.connection.execute("SELECT count FROM usage WHERE bucket=?", (key,)).fetchone()
+                row = self.connection.execute(
+                    "SELECT count FROM usage WHERE bucket=?", (key,)
+                ).fetchone()
                 if row and row[0] >= limit:
-                    raise OmniaError("rate_limited", "Evaluation allowance exhausted for this period.", True)
+                    raise OmniaError(
+                        "rate_limited", "Evaluation allowance exhausted for this period.", True
+                    )
                 self.connection.execute(
                     "INSERT INTO usage VALUES (?,1,?) ON CONFLICT(bucket) DO UPDATE SET count=count+1",
                     (key, expiry),
@@ -118,8 +161,12 @@ class Ledger:
     def prune(self, retention_days: int) -> None:
         now = self.clock()
         with self.transaction():
-            self.connection.execute("DELETE FROM decisions WHERE created<?", (now - retention_days * 86400,))
-            self.connection.execute("DELETE FROM failures WHERE created<?", (now - retention_days * 86400,))
+            self.connection.execute(
+                "DELETE FROM decisions WHERE created<?", (now - retention_days * 86400,)
+            )
+            self.connection.execute(
+                "DELETE FROM failures WHERE created<?", (now - retention_days * 86400,)
+            )
             self.connection.execute("DELETE FROM claims WHERE expires<=?", (now,))
             self.connection.execute("DELETE FROM usage WHERE expires<=?", (now,))
 
@@ -132,7 +179,10 @@ def read_decision(path: Path, decision_id: str) -> DecisionResult | None:
     resolved = path.expanduser().resolve()
     if not resolved.is_file():
         return None
-    with sqlite3.connect(resolved.as_uri() + "?mode=ro", uri=True, timeout=1.5) as connection:
-        row = connection.execute("SELECT result FROM decisions WHERE id=?", (decision_id,)).fetchone()
+    with closing(
+        sqlite3.connect(resolved.as_uri() + "?mode=ro", uri=True, timeout=0.05)
+    ) as connection:
+        row = connection.execute(
+            "SELECT result FROM decisions WHERE id=?", (decision_id,)
+        ).fetchone()
     return DecisionResult.model_validate_json(row[0]) if row else None
-

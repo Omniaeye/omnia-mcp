@@ -3,4 +3,3 @@
 """OMNIA MCP: structured decisions through JEV and LAYA."""
 
 __version__ = "0.1.0"
-

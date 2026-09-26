@@ -1,6 +1,7 @@
 # Copyright 2026 OMNIA EYE Corporation.
 # SPDX-License-Identifier: Apache-2.0
 """Validate provider output against the exact submitted questions."""
+
 from __future__ import annotations
 
 import hashlib
@@ -47,7 +48,9 @@ def validate_answers(raw: dict, questions: dict) -> dict:
                 highest = max(p, 1 - p)
             else:
                 criteria = question["criteria"]
-                labels = list(criteria) if kind == "choice" else list(map(str, range(len(criteria))))
+                labels = (
+                    list(criteria) if kind == "choice" else list(map(str, range(len(criteria))))
+                )
                 distribution = answer["probabilities"]
                 if not isinstance(distribution, dict) or set(distribution) != set(labels):
                     raise ValueError("distribution labels differ")
@@ -58,7 +61,10 @@ def validate_answers(raw: dict, questions: dict) -> dict:
                 highest = max(probabilities.values())
                 if kind == "choice":
                     chosen = answer["choice"]
-                    if chosen not in probabilities or abs(probabilities[chosen] - highest) > .00011:
+                    if (
+                        chosen not in probabilities
+                        or abs(probabilities[chosen] - highest) > 0.00011
+                    ):
                         raise ValueError("choice conflicts with distribution")
                     validated["choice"] = chosen
                 else:
@@ -68,18 +74,28 @@ def validate_answers(raw: dict, questions: dict) -> dict:
                     expected = sum(i * probabilities[str(i)] for i in range(len(labels)))
                     if not math.isfinite(score) or not 0 <= score <= len(labels) - 1:
                         raise ValueError("score outside rubric")
-                    if abs(score - expected) > len(labels) ** 2 * .000051:
+                    if abs(score - expected) > len(labels) ** 2 * 0.000051:
                         raise ValueError("score conflicts with distribution")
                     validated["score"] = score
+                    if "legend" in answer:
+                        expected_legend = {str(i): level for i, level in enumerate(criteria)}
+                        if answer["legend"] != expected_legend:
+                            raise ValueError("score legend conflicts with rubric")
+                        validated["legend"] = answer["legend"]
             for field in ("confidence", "answer_confidence"):
                 if field in answer:
                     validated[field] = probability(answer[field])
-            if "answer_confidence" in validated and abs(validated["answer_confidence"] - highest) > .00011:
+            if (
+                "answer_confidence" in validated
+                and abs(validated["answer_confidence"] - highest) > 0.00011
+            ):
                 raise ValueError("answer confidence conflicts with distribution")
             result[key] = validated
         return result
     except (KeyError, TypeError, ValueError, OverflowError):
-        raise OmniaError("invalid_provider_response", "Provider returned an incompatible decision.") from None
+        raise OmniaError(
+            "invalid_provider_response", "Provider returned an incompatible decision."
+        ) from None
 
 
 def review(answers: dict, policy: DecisionPolicy) -> list[str]:
@@ -95,4 +111,3 @@ def review(answers: dict, policy: DecisionPolicy) -> list[str]:
         if probabilities[0] - probabilities[1] < policy.min_margin:
             reasons.append(f"{key}:below_margin_threshold")
     return reasons
-

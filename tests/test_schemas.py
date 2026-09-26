@@ -2,13 +2,16 @@
 # SPDX-License-Identifier: Apache-2.0
 import pytest
 from pydantic import ValidationError
-from omnia_mcp.schemas import EvaluationRequest, BatchItemResult
+
+from omnia_mcp.schemas import BatchItemResult, EvaluationRequest
 
 
 def request(**extra):
-    return EvaluationRequest(state="A new release", questions={
-        "relevant": {"type": "noul", "instructions": "Does it announce a release?"}
-    }, **extra)
+    return EvaluationRequest(
+        state="A new release",
+        questions={"relevant": {"type": "noul", "instructions": "Does it announce a release?"}},
+        **extra,
+    )
 
 
 def test_schema_rejects_unknown_controls():
@@ -25,9 +28,10 @@ def test_nonfinite_nested_input_is_rejected():
 
 def test_question_requires_both_noul_criteria():
     with pytest.raises(ValidationError):
-        EvaluationRequest(state="x", questions={"q": {
-            "type": "noul", "instructions": "x", "criteria": {"true": "yes"}
-        }})
+        EvaluationRequest(
+            state="x",
+            questions={"q": {"type": "noul", "instructions": "x", "criteria": {"true": "yes"}}},
+        )
 
 
 def test_batch_item_has_exactly_one_outcome():
@@ -38,4 +42,3 @@ def test_batch_item_has_exactly_one_outcome():
 def test_chinese_and_japanese_are_preserved():
     value = EvaluationRequest(state="新しいリリース。新版本已发布。", questions=request().questions)
     assert value.state.endswith("新版本已发布。")
-

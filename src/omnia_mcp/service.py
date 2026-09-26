@@ -44,6 +44,10 @@ class DecisionService:
         self.providers = providers
         self._ledger = None
         self._semaphore = asyncio.Semaphore(settings.max_concurrent_requests)
+        self._provider_semaphores = {
+            name: asyncio.Semaphore(1 if name == "laya" else settings.max_concurrent_requests)
+            for name in providers
+        }
         self._inflight: dict[str, asyncio.Task] = {}
         self._callers = 0
         self._waiters: dict[str, int] = {}
@@ -128,6 +132,9 @@ class DecisionService:
             if existing:
                 return existing.model_copy(update={"cached": True})
             task = self._inflight.get(key)
+            if task is not None and (task.done() or task.cancelling()):
+                self._inflight.pop(key, None)
+                task = None
             shared = task is not None
             if task is None:
                 if (
@@ -173,7 +180,7 @@ class DecisionService:
         start = time.perf_counter()
         try:
             async with asyncio.timeout(self.settings.request_timeout_seconds):
-                async with self._semaphore:
+                async with self._provider_semaphores[name], self._semaphore:
                     ledger = self._db()
                     while owner is None:
                         cached = ledger.cached(key, self.settings.cache_ttl_seconds)

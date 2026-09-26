@@ -1,6 +1,7 @@
 # Copyright 2026 OMNIA EYE Corporation.
 # SPDX-License-Identifier: Apache-2.0
 """Validated process configuration; credentials never enter public manifests."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -14,7 +15,11 @@ ProviderName = Literal["jev", "laya"]
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_prefix="OMNIA_", extra="ignore", env_file=None, hide_input_in_errors=True
+        env_prefix="OMNIA_",
+        extra="ignore",
+        env_file=None,
+        hide_input_in_errors=True,
+        populate_by_name=True,
     )
     default_provider: ProviderName = "laya"
     allowed_providers: Annotated[tuple[ProviderName, ...], NoDecode] = ("laya",)
@@ -54,13 +59,16 @@ class Settings(BaseSettings):
     @classmethod
     def revision_format(cls, value: str) -> str:
         import re
+
         if value and not re.fullmatch("[0-9a-f]{40}", value):
             raise ValueError("LAYA revision must be a complete lowercase commit SHA")
         return value
 
     @model_validator(mode="after")
     def coherent(self):
-        if not self.allowed_providers or len(set(self.allowed_providers)) != len(self.allowed_providers):
+        if not self.allowed_providers or len(set(self.allowed_providers)) != len(
+            self.allowed_providers
+        ):
             raise ValueError("allowed providers must be nonempty and unique")
         if self.default_provider not in self.allowed_providers:
             raise ValueError("default provider must be enabled")
@@ -80,13 +88,19 @@ class Settings(BaseSettings):
             "default_provider": self.default_provider,
             "allowed_providers": list(self.allowed_providers),
             "limits": {
-                name: getattr(self, name) for name in (
-                    "max_input_bytes", "max_questions", "max_options", "max_batch_items",
-                    "max_concurrent_requests", "max_queue_size", "request_timeout_seconds",
-                    "max_requests_per_minute", "max_requests_per_day",
+                name: getattr(self, name)
+                for name in (
+                    "max_input_bytes",
+                    "max_questions",
+                    "max_options",
+                    "max_batch_items",
+                    "max_concurrent_requests",
+                    "max_queue_size",
+                    "request_timeout_seconds",
+                    "max_requests_per_minute",
+                    "max_requests_per_day",
                 )
             },
             "cache_ttl_seconds": self.cache_ttl_seconds,
             "retention_days": self.retention_days,
         }
-
