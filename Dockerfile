@@ -1,11 +1,11 @@
 # Copyright 2026 OMNIA EYE Corporation. SPDX-License-Identifier: Apache-2.0
-FROM python:3.12-slim@sha256:f77ac9e44ae96ef2c90b8053ea08c31f8be030f824196b0ae4db6d462c84e51f AS builder
+FROM python:3.14-slim@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170 AS builder
 WORKDIR /build
 COPY pyproject.toml README.md LICENSE NOTICE ./
 COPY src ./src
 RUN python -m pip wheel --no-cache-dir --wheel-dir /wheels .
 
-FROM python:3.12-slim@sha256:f77ac9e44ae96ef2c90b8053ea08c31f8be030f824196b0ae4db6d462c84e51f
+FROM python:3.14-slim@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170
 LABEL org.opencontainers.image.title="OMNIA MCP — JEV & LAYA"
 LABEL org.opencontainers.image.source="https://github.com/Omniaeye/omnia-mcp"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
